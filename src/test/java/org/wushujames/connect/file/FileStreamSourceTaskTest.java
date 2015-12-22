@@ -15,7 +15,7 @@
  * limitations under the License.
  **/
 
-package org.wushujames.copycat.file;
+package org.wushujames.connect.file;
 
 import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.source.SourceRecord;
