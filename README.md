@@ -7,8 +7,8 @@ This things specific to this repo are the build files, as well as the instructio
 Instructions for building
 -------------------------
 ```
-$ git clone https://github.com/wushujames/copycat-connector-skeleton copycat-file
-$ (cd copycat-file && ./gradlew build)
+$ git clone https://github.com/wushujames/kafka-connector-skeleton connect-file
+$ (cd connect-file && ./gradlew build)
 ```
     
 Instructions for running
@@ -29,16 +29,16 @@ Instructions for running
 
 3.  Run your copycat file-source plugin
     ```
-    $ export CLASSPATH=/path/to/copycat-file/build/libs/copycat-file.jar
-    $ kafka_2.11-0.9.0.0/bin/copycat-standalone.sh copycat-file/copycat-standalone.properties  copycat-file/copycat-file-source.properties
+    $ export CLASSPATH=/path/to/connect-file/build/libs/connect-file.jar
+    $ kafka_2.11-0.9.0.0/bin/copycat-standalone.sh connect-file/copycat-standalone.properties  connect-file/connect-file-source.properties
     ```
     
-4.  Write stuff to test.txt (that is the that this connector will read from, as configured in copycat-file-source.properties)
+4.  Write stuff to test.txt (that is the that this connector will read from, as configured in connect-file-source.properties)
     ```
     $ echo `date` >> test.txt
     ```
     
-5.  Read the data out from the kafka topic named 'test' (that is the that this connector will write to, as configured in copycat-file-source.properties)
+5.  Read the data out from the kafka topic named 'test' (that is the that this connector will write to, as configured in connect-file-source.properties)
     ```
     $ kafka_2.11-0.9.0.0/bin/kafka-console-consumer.sh  --zookeeper localhost:2181 --topic test
     {"schema":{"type":"string","optional":false},"payload":"Thu Oct 15 23:03:15 PDT 2015"}
@@ -46,8 +46,8 @@ Instructions for running
 
 6.  Run your copycat file-sink plugin
     ```
-    $ export CLASSPATH=/path/to/copycat-file/build/libs/copycat-file.jar
-    $ kafka_2.11-0.9.0.0/bin/copycat-standalone.sh copycat-file/copycat-standalone.properties  copycat-file/copycat-file-sink.properties
+    $ export CLASSPATH=/path/to/connect-file/build/libs/connect-file.jar
+    $ kafka_2.11-0.9.0.0/bin/copycat-standalone.sh connect-file/copycat-standalone.properties  connect-file/connect-file-sink.properties
     ```
 
 7.  Check that the file-sink plugin has written the data to the file
