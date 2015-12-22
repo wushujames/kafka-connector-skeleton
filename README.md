@@ -27,10 +27,10 @@ Instructions for running
     $ ./bin/kafka-server-start.sh config/server.properties
     ```
 
-3.  Run your copycat file-source plugin
+3.  Run your connect-file-source plugin
     ```
     $ export CLASSPATH=/path/to/connect-file/build/libs/connect-file.jar
-    $ kafka_2.11-0.9.0.0/bin/copycat-standalone.sh connect-file/copycat-standalone.properties  connect-file/connect-file-source.properties
+    $ kafka_2.11-0.9.0.0/bin/connect-standalone.sh connect-file/connect-standalone.properties  connect-file/connect-file-source.properties
     ```
     
 4.  Write stuff to test.txt (that is the that this connector will read from, as configured in connect-file-source.properties)
@@ -44,10 +44,10 @@ Instructions for running
     {"schema":{"type":"string","optional":false},"payload":"Thu Oct 15 23:03:15 PDT 2015"}
     ```
 
-6.  Run your copycat file-sink plugin
+6.  Run your connect-file-sink plugin
     ```
     $ export CLASSPATH=/path/to/connect-file/build/libs/connect-file.jar
-    $ kafka_2.11-0.9.0.0/bin/copycat-standalone.sh connect-file/copycat-standalone.properties  connect-file/connect-file-sink.properties
+    $ kafka_2.11-0.9.0.0/bin/connect-standalone.sh connect-file/connect-standalone.properties  connect-file/connect-file-sink.properties
     ```
 
 7.  Check that the file-sink plugin has written the data to the file
