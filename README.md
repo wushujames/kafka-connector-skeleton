@@ -1,6 +1,6 @@
-This is a simple copycat connector. This repo is intended to be a simple skeleton, that you can copy/paste to get started with developing your own copycat connector.
+This is a simple kafka connector (formerly called a "copycat connector"). This repo is intended to be a simple skeleton, that you can copy/paste to get started with developing your own kafka connector.
 
-This repo contains a fork of the copycat-file plugin from Kafka trunk. The code itself has not changed. However, I renamed the package, so that there is no chance that you will accidentally get the copycat-file plugin from trunk.
+This repo contains a fork of the connect-file plugin from Kafka trunk. The code itself has not changed. However, I renamed the package, so that there is no chance that you will accidentally get the connect-file plugin from trunk.
 
 This things specific to this repo are the build files, as well as the instructions in this README that tell you how to get started.
 
