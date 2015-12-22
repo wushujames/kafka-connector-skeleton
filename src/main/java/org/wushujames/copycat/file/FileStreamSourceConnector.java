@@ -17,13 +17,15 @@
 
 package org.wushujames.copycat.file;
 
-import org.apache.kafka.copycat.connector.Task;
-import org.apache.kafka.copycat.errors.CopycatException;
-import org.apache.kafka.copycat.source.SourceConnector;
+import org.apache.kafka.common.utils.AppInfoParser;
+import org.apache.kafka.connect.connector.Task;
+import org.apache.kafka.connect.errors.ConnectException;
+import org.apache.kafka.connect.source.SourceConnector;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Properties;
+import java.util.Map;
 
 /**
  * Very simple connector that works with the console. This connector supports both source and
@@ -37,13 +39,18 @@ public class FileStreamSourceConnector extends SourceConnector {
     private String topic;
 
     @Override
-    public void start(Properties props) {
-        filename = props.getProperty(FILE_CONFIG);
-        topic = props.getProperty(TOPIC_CONFIG);
+    public String version() {
+        return AppInfoParser.getVersion();
+    }
+
+    @Override
+    public void start(Map<String, String> props) {
+        filename = props.get(FILE_CONFIG);
+        topic = props.get(TOPIC_CONFIG);
         if (topic == null || topic.isEmpty())
-            throw new CopycatException("FileStreamSourceConnector configuration must include 'topic' setting");
+            throw new ConnectException("FileStreamSourceConnector configuration must include 'topic' setting");
         if (topic.contains(","))
-            throw new CopycatException("FileStreamSourceConnector should only have a single topic when used as a source.");
+            throw new ConnectException("FileStreamSourceConnector should only have a single topic when used as a source.");
     }
 
     @Override
@@ -52,13 +59,13 @@ public class FileStreamSourceConnector extends SourceConnector {
     }
 
     @Override
-    public List<Properties> taskConfigs(int maxTasks) {
-        ArrayList<Properties> configs = new ArrayList<>();
+    public List<Map<String, String>> taskConfigs(int maxTasks) {
+        ArrayList<Map<String, String>> configs = new ArrayList<>();
         // Only one input stream makes sense.
-        Properties config = new Properties();
+        Map<String, String> config = new HashMap<>();
         if (filename != null)
-            config.setProperty(FILE_CONFIG, filename);
-        config.setProperty(TOPIC_CONFIG, topic);
+            config.put(FILE_CONFIG, filename);
+        config.put(TOPIC_CONFIG, topic);
         configs.add(config);
         return configs;
     }

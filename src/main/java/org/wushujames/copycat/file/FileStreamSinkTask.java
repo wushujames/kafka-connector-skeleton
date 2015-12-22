@@ -19,9 +19,9 @@ package org.wushujames.copycat.file;
 
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.copycat.errors.CopycatException;
-import org.apache.kafka.copycat.sink.SinkRecord;
-import org.apache.kafka.copycat.sink.SinkTask;
+import org.apache.kafka.connect.errors.ConnectException;
+import org.apache.kafka.connect.sink.SinkRecord;
+import org.apache.kafka.connect.sink.SinkTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +30,6 @@ import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Properties;
 
 /**
  * FileStreamSinkTask writes records to stdout or a file.
@@ -38,6 +37,7 @@ import java.util.Properties;
 public class FileStreamSinkTask extends SinkTask {
     private static final Logger log = LoggerFactory.getLogger(FileStreamSinkTask.class);
 
+    private String filename;
     private PrintStream outputStream;
 
     public FileStreamSinkTask() {
@@ -45,19 +45,25 @@ public class FileStreamSinkTask extends SinkTask {
 
     // for testing
     public FileStreamSinkTask(PrintStream outputStream) {
+        filename = null;
         this.outputStream = outputStream;
     }
 
     @Override
-    public void start(Properties props) {
-        String filename = props.getProperty(FileStreamSinkConnector.FILE_CONFIG);
+    public String version() {
+        return new FileStreamSinkConnector().version();
+    }
+
+    @Override
+    public void start(Map<String, String> props) {
+        filename = props.get(FileStreamSinkConnector.FILE_CONFIG);
         if (filename == null) {
             outputStream = System.out;
         } else {
             try {
                 outputStream = new PrintStream(new FileOutputStream(filename, true));
             } catch (FileNotFoundException e) {
-                throw new CopycatException("Couldn't find or create file for FileStreamSinkTask", e);
+                throw new ConnectException("Couldn't find or create file for FileStreamSinkTask", e);
             }
         }
     }
@@ -65,16 +71,24 @@ public class FileStreamSinkTask extends SinkTask {
     @Override
     public void put(Collection<SinkRecord> sinkRecords) {
         for (SinkRecord record : sinkRecords) {
+            log.trace("Writing line to {}: {}", logFilename(), record.value());
             outputStream.println(record.value());
         }
     }
 
     @Override
     public void flush(Map<TopicPartition, OffsetAndMetadata> offsets) {
+        log.trace("Flushing output stream for {}", logFilename());
         outputStream.flush();
     }
 
     @Override
     public void stop() {
+        if (outputStream != System.out)
+            outputStream.close();
+    }
+
+    private String logFilename() {
+        return filename == null ? "stdout" : filename;
     }
 }

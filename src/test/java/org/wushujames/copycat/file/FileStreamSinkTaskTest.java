@@ -19,8 +19,8 @@ package org.wushujames.copycat.file;
 
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.copycat.data.Schema;
-import org.apache.kafka.copycat.sink.SinkRecord;
+import org.apache.kafka.connect.data.Schema;
+import org.apache.kafka.connect.sink.SinkRecord;
 import org.junit.Before;
 import org.junit.Test;
 

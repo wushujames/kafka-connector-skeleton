@@ -17,10 +17,10 @@
 
 package org.wushujames.copycat.file;
 
-import org.apache.kafka.copycat.errors.CopycatException;
-import org.apache.kafka.copycat.source.SourceRecord;
-import org.apache.kafka.copycat.source.SourceTaskContext;
-import org.apache.kafka.copycat.storage.OffsetStorageReader;
+import org.apache.kafka.connect.errors.ConnectException;
+import org.apache.kafka.connect.source.SourceRecord;
+import org.apache.kafka.connect.source.SourceTaskContext;
+import org.apache.kafka.connect.storage.OffsetStorageReader;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
@@ -31,9 +31,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
 
@@ -42,8 +42,9 @@ public class FileStreamSourceTaskTest {
     private static final String TOPIC = "test";
 
     private File tempFile;
-    private Properties config;
+    private Map<String, String> config;
     private OffsetStorageReader offsetStorageReader;
+    private SourceTaskContext context;
     private FileStreamSourceTask task;
 
     private boolean verifyMocks = false;
@@ -51,12 +52,13 @@ public class FileStreamSourceTaskTest {
     @Before
     public void setup() throws IOException {
         tempFile = File.createTempFile("file-stream-source-task-test", null);
-        config = new Properties();
-        config.setProperty(FileStreamSourceConnector.FILE_CONFIG, tempFile.getAbsolutePath());
-        config.setProperty(FileStreamSourceConnector.TOPIC_CONFIG, TOPIC);
+        config = new HashMap<>();
+        config.put(FileStreamSourceConnector.FILE_CONFIG, tempFile.getAbsolutePath());
+        config.put(FileStreamSourceConnector.TOPIC_CONFIG, TOPIC);
         task = new FileStreamSourceTask();
         offsetStorageReader = PowerMock.createMock(OffsetStorageReader.class);
-        task.initialize(new SourceTaskContext(offsetStorageReader));
+        context = PowerMock.createMock(SourceTaskContext.class);
+        task.initialize(context);
     }
 
     @After
@@ -124,7 +126,7 @@ public class FileStreamSourceTaskTest {
         task.stop();
     }
 
-    @Test(expected = CopycatException.class)
+    @Test(expected = ConnectException.class)
     public void testMissingTopic() throws InterruptedException {
         replay();
 
@@ -133,7 +135,7 @@ public class FileStreamSourceTaskTest {
     }
 
     public void testInvalidFile() throws InterruptedException {
-        config.setProperty(FileStreamSourceConnector.FILE_CONFIG, "bogusfilename");
+        config.put(FileStreamSourceConnector.FILE_CONFIG, "bogusfilename");
         task.start(config);
         // Currently the task retries indefinitely if the file isn't found, but shouldn't return any data.
         for (int i = 0; i < 100; i++)
@@ -142,6 +144,7 @@ public class FileStreamSourceTaskTest {
 
 
     private void expectOffsetLookupReturnNone() {
+        EasyMock.expect(context.offsetStorageReader()).andReturn(offsetStorageReader);
         EasyMock.expect(offsetStorageReader.offset(EasyMock.anyObject(Map.class))).andReturn(null);
     }
 }

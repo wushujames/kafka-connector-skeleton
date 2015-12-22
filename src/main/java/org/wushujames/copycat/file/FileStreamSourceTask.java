@@ -17,10 +17,10 @@
 
 package org.wushujames.copycat.file;
 
-import org.apache.kafka.copycat.data.Schema;
-import org.apache.kafka.copycat.errors.CopycatException;
-import org.apache.kafka.copycat.source.SourceRecord;
-import org.apache.kafka.copycat.source.SourceTask;
+import org.apache.kafka.connect.data.Schema;
+import org.apache.kafka.connect.errors.ConnectException;
+import org.apache.kafka.connect.source.SourceRecord;
+import org.apache.kafka.connect.source.SourceTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,17 +46,22 @@ public class FileStreamSourceTask extends SourceTask {
     private Long streamOffset;
 
     @Override
-    public void start(Properties props) {
-        filename = props.getProperty(FileStreamSourceConnector.FILE_CONFIG);
+    public String version() {
+        return new FileStreamSourceConnector().version();
+    }
+
+    @Override
+    public void start(Map<String, String> props) {
+        filename = props.get(FileStreamSourceConnector.FILE_CONFIG);
         if (filename == null || filename.isEmpty()) {
             stream = System.in;
             // Tracking offset for stdin doesn't make sense
             streamOffset = null;
             reader = new BufferedReader(new InputStreamReader(stream));
         }
-        topic = props.getProperty(FileStreamSourceConnector.TOPIC_CONFIG);
+        topic = props.get(FileStreamSourceConnector.TOPIC_CONFIG);
         if (topic == null)
-            throw new CopycatException("ConsoleSourceTask config missing topic setting");
+            throw new ConnectException("FileStreamSourceTask config missing topic setting");
     }
 
     @Override
@@ -68,7 +73,7 @@ public class FileStreamSourceTask extends SourceTask {
                 if (offset != null) {
                     Object lastRecordedOffset = offset.get(POSITION_FIELD);
                     if (lastRecordedOffset != null && !(lastRecordedOffset instanceof Long))
-                        throw new CopycatException("Offset position is the incorrect type");
+                        throw new ConnectException("Offset position is the incorrect type");
                     if (lastRecordedOffset != null) {
                         log.debug("Found previous offset, trying to skip to file offset {}", lastRecordedOffset);
                         long skipLeft = (Long) lastRecordedOffset;
@@ -78,7 +83,7 @@ public class FileStreamSourceTask extends SourceTask {
                                 skipLeft -= skipped;
                             } catch (IOException e) {
                                 log.error("Error while trying to seek to previous offset in file: ", e);
-                                throw new CopycatException(e);
+                                throw new ConnectException(e);
                             }
                         }
                         log.debug("Skipped to offset {}", lastRecordedOffset);
@@ -88,6 +93,7 @@ public class FileStreamSourceTask extends SourceTask {
                     streamOffset = 0L;
                 }
                 reader = new BufferedReader(new InputStreamReader(stream));
+                log.debug("Opened {} for reading", logFilename());
             } catch (FileNotFoundException e) {
                 log.warn("Couldn't find file for FileStreamSourceTask, sleeping to wait for it to be created");
                 synchronized (this) {
@@ -113,6 +119,7 @@ public class FileStreamSourceTask extends SourceTask {
             int nread = 0;
             while (readerCopy.ready()) {
                 nread = readerCopy.read(buffer, offset, buffer.length - offset);
+                log.trace("Read {} bytes from {}", nread, logFilename());
 
                 if (nread > 0) {
                     offset += nread;
@@ -126,6 +133,7 @@ public class FileStreamSourceTask extends SourceTask {
                     do {
                         line = extractLine();
                         if (line != null) {
+                            log.trace("Read a line from {}", logFilename());
                             if (records == null)
                                 records = new ArrayList<>();
                             records.add(new SourceRecord(offsetKey(filename), offsetValue(streamOffset), topic, VALUE_SCHEMA, line));
@@ -183,10 +191,12 @@ public class FileStreamSourceTask extends SourceTask {
         log.trace("Stopping");
         synchronized (this) {
             try {
-                stream.close();
-                log.trace("Closed input stream");
+                if (stream != null && stream != System.in) {
+                    stream.close();
+                    log.trace("Closed input stream");
+                }
             } catch (IOException e) {
-                log.error("Failed to close ConsoleSourceTask stream: ", e);
+                log.error("Failed to close FileStreamSourceTask stream: ", e);
             }
             this.notify();
         }
@@ -198,5 +208,9 @@ public class FileStreamSourceTask extends SourceTask {
 
     private Map<String, Long> offsetValue(Long pos) {
         return Collections.singletonMap(POSITION_FIELD, pos);
+    }
+
+    private String logFilename() {
+        return filename == null ? "stdin" : filename;
     }
 }
