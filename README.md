@@ -4,8 +4,6 @@ This repo contains a fork of the copycat-file plugin from Kafka trunk. The code 
 
 This things specific to this repo are the build files, as well as the instructions in this README that tell you how to get started.
 
-As of today (2015-10-15), Copycat has not been released in any official version of Kafka, so in order to run it and develop against it, we will need to work off of Kafka trunk.
-
 Instructions for building
 -------------------------
 ```
